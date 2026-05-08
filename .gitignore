@@ -1,0 +1,25 @@
+# Build outputs
+/vibeCodingSecretManager
+bin/
+dist/
+
+# Secret files
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.p12
+*.pfx
+
+secrets/
+Secrets/
+
+# KeePassXC
+*.kdbx
+*.kdbx.lock
+
+# OS/editor
+.DS_Store
+._*

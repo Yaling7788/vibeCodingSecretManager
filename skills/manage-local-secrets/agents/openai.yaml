@@ -1,0 +1,3 @@
+display_name: Manage Local Secrets
+short_description: Safe local secret operations
+default_prompt: Use this skill to create, rotate, delete, check, and inject local development secrets through approved secret-manager scripts while avoiding direct secret exposure.

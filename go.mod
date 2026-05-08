@@ -1,4 +1,4 @@
-module github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager
+module github.com/Yaling7788/vibeCodingSecretManager
 
 go 1.24.0
 

@@ -7,8 +7,8 @@ set -eu
 #   ./scripts/install.sh
 #
 # Remote one-liner from an application repo:
-#   VCSM_REPO_URL=https://github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager.git \
-#   sh -c "$(curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/main/scripts/install.sh)"
+#   VCSM_REPO_URL=https://github.com/Yaling7788/vibeCodingSecretManager.git \
+#   sh -c "$(curl -fsSL https://raw.githubusercontent.com/Yaling7788/vibeCodingSecretManager/main/scripts/install.sh)"
 #
 # Optional inputs:
 #   VCSM_PROJECT=sample-webapp
@@ -57,7 +57,7 @@ if [ -n "$repo_root" ] && [ -f "$repo_root/go.mod" ] && [ -d "$repo_root/cmd/vib
   cleanup=""
 else
   need git
-  repo_url="${VCSM_REPO_URL:-https://github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager.git}"
+  repo_url="${VCSM_REPO_URL:-https://github.com/Yaling7788/vibeCodingSecretManager.git}"
   tmp_dir="$(mktemp -d)"
   cleanup="$tmp_dir"
   git clone --depth 1 "$repo_url" "$tmp_dir/vibeCodingSecretManager" >/dev/null

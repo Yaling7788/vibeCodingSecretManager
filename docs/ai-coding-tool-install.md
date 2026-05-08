@@ -8,7 +8,7 @@ This page is meant to be pasted into Claude Code, Codex, Cursor, or another loca
 Install vibeCodingSecretManager in this application repo using KeePassXC as the local secret manager.
 
 Use this Git repository:
-https://github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager
+https://github.com/Yaling7788/vibeCodingSecretManager
 
 Your job:
 1. Install the CLI using the repository's scripts/install.sh workflow.
@@ -38,11 +38,11 @@ Ask me to create the KeePassXC entries manually, then run:
 Run this from the application repo you want to protect:
 
 ```bash
-VCSM_REPO_URL=https://github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager.git \
+VCSM_REPO_URL=https://github.com/Yaling7788/vibeCodingSecretManager.git \
 VCSM_PROJECT=sample-webapp \
 VCSM_ENV=dev \
 VCSM_SECRETS=DATABASE_URL,OPENAI_API_KEY \
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/main/scripts/install.sh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/Yaling7788/vibeCodingSecretManager/main/scripts/install.sh)"
 ```
 
 Customize:

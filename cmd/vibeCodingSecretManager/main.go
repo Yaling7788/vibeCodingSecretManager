@@ -13,11 +13,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/internal/config"
-	"github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/internal/keepassxc"
-	"github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/internal/platform"
-	"github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/internal/redaction"
-	"github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/internal/runner"
+	"github.com/Yaling7788/vibeCodingSecretManager/internal/config"
+	"github.com/Yaling7788/vibeCodingSecretManager/internal/keepassxc"
+	"github.com/Yaling7788/vibeCodingSecretManager/internal/platform"
+	"github.com/Yaling7788/vibeCodingSecretManager/internal/redaction"
+	"github.com/Yaling7788/vibeCodingSecretManager/internal/runner"
 	"golang.org/x/term"
 )
 

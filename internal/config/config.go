@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/internal/platform"
+	"github.com/Yaling7788/vibeCodingSecretManager/internal/platform"
 	"gopkg.in/yaml.v3"
 )
 

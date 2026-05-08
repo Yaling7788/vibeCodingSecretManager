@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/internal/config"
-	"github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/internal/redaction"
+	"github.com/Yaling7788/vibeCodingSecretManager/internal/config"
+	"github.com/Yaling7788/vibeCodingSecretManager/internal/redaction"
 )
 
 type Client struct {

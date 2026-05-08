@@ -11,6 +11,8 @@ Treat secret values as non-observable. Do not read, print, summarize, infer, cop
 
 Only use approved local handlers that are designed to hide values, prompt the human when needed, and return status without exposing the secret.
 
+The human must enter the KeePassXC master password into a local hidden prompt. Do not manage, store, request, paste, or receive the master password. Do not create headless unlock flows where the AI controls the master key.
+
 ## Allowed Agent Work
 
 - Create and edit secret manifests, templates, `.env.example`, wrapper scripts, and documentation.
@@ -24,6 +26,8 @@ Only use approved local handlers that are designed to hide values, prompt the hu
 Never run commands whose purpose is to expose values, including `env`, `printenv`, `set`, `export`, `keepassxc-cli show`, `cat .env*`, `rg .env*`, password-manager raw reads, shell history reads, clipboard reads, or cloud secret-manager raw get commands.
 
 Never write real values into repo files, logs, command arguments, test snapshots, screenshots, comments, Git commits, issue text, or chat output.
+
+Never store the KeePassXC master password in environment variables, files, shell history, command arguments, keychain entries accessible to the agent, CI settings, or agent memory.
 
 Never implement a localhost secret API, debug endpoint, value dump, temporary `.env` writer, or "show secret" command unless the user explicitly asks for a human-only emergency export. If that happens, pause and warn that this violates the normal boundary.
 
@@ -87,5 +91,7 @@ If create, rotate, or delete are requested but missing, implement them in the ha
 ## If Blocked
 
 If an operation requires a real value, ask the human to enter it into the local hidden prompt or password-manager UI. Do not ask them to paste it into chat.
+
+If the user asks for headless AI-managed KeePassXC unlock, explain that this exposes the vault to the AI and violates the skill's security model. Offer human unlock plus approved wrapper commands instead.
 
 If the handler would expose values, stop and modify the handler first.

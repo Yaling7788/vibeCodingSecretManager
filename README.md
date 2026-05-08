@@ -8,6 +8,18 @@ Secrets stay in KeePassXC. The AI agent runs a safe wrapper command. The wrapper
 
 ## Install
 
+From an application repo, use the one-command bootstrap:
+
+```bash
+VCSM_REPO_URL=https://github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager.git \
+VCSM_PROJECT=sample-webapp \
+VCSM_ENV=dev \
+VCSM_SECRETS=DATABASE_URL,OPENAI_API_KEY \
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/main/scripts/install.sh)"
+```
+
+Or install only the CLI:
+
 ```bash
 go install github.com/YOUR_GITHUB_USERNAME/vibeCodingSecretManager/cmd/vibeCodingSecretManager@latest
 ```
@@ -19,6 +31,8 @@ go build ./cmd/vibeCodingSecretManager
 ```
 
 ## Quick Start
+
+For AI coding tools, start with [AI coding tool install](docs/ai-coding-tool-install.md). It includes a paste-ready prompt and a one-command setup flow.
 
 Create a starter config:
 
@@ -89,6 +103,10 @@ The AI coding agent must not read, print, copy, or inspect secrets.
 `vibeCodingSecretManager` retrieves only the secrets configured for a specific project and environment. It injects them into the child process environment and never prints the values.
 
 Use development and test credentials. This tool is a guardrail for local workflow safety, not a sandbox for malicious code.
+
+The KeePassXC master password must be entered by the human into a local hidden prompt. Do not store it in files, environment variables, shell history, command arguments, or any AI-readable key store.
+
+Headless mode where the AI can unlock KeePassXC is not safe for this threat model. If the AI controls the master key, it can unlock and retrieve the vault contents. Use a human unlock step plus approved wrapper commands instead.
 
 ## KeePassXC Naming
 
@@ -167,5 +185,6 @@ Do not let the agent run `keepassxc-cli`, `printenv`, `env`, or commands that re
 
 - [Threat model](docs/threat-model.md)
 - [KeePassXC setup](docs/keepassxc-setup.md)
+- [AI coding tool install](docs/ai-coding-tool-install.md)
 - [Claude Code setup](docs/claude-code-setup.md)
 - [Examples](docs/examples.md)

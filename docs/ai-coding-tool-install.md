@@ -12,12 +12,13 @@ https://github.com/Yaling7788/vibeCodingSecretManager
 
 Your job:
 1. Install the CLI using the repository's scripts/install.sh workflow.
-2. Create or update ./scripts/secret-dev.
-3. Create or update .env.example with placeholders only.
-4. Update .gitignore so .env files and KeePassXC files are ignored.
-5. Create AI coding rules in CLAUDE.md or the equivalent local agent instruction file.
-6. Configure ~/.config/vibeCodingSecretManager/config.yaml with project name, environment, project root, KeePassXC database path, and secret entry paths.
-7. Use KeePassXC as the only secret value store.
+2. Install KeePassXC when the bootstrap script can do so safely; otherwise tell me the exact manual KeePassXC install command.
+3. Create or update ./scripts/secret-dev.
+4. Create or update .env.example with placeholders only.
+5. Update .gitignore so .env files and KeePassXC files are ignored.
+6. Create AI coding rules in CLAUDE.md or the equivalent local agent instruction file.
+7. Configure ~/.config/vibeCodingSecretManager/config.yaml with project name, environment, project root, KeePassXC database path, and secret entry paths.
+8. Use KeePassXC as the only secret value store.
 
 Security rules:
 - Do not ask me to paste real secret values into chat.
@@ -53,14 +54,19 @@ Customize:
 - `VCSM_DATABASE`: KeePassXC database path, defaults to `~/KeePass/example-dev.kdbx`.
 - `VCSM_KEY_FILE`: optional KeePassXC key file path.
 - `VCSM_CLI_PATH`: optional path to `keepassxc-cli`.
+- `VCSM_INSTALL_KEEPASSXC`: set to `0` to skip automatic KeePassXC install attempts.
 
 The installer creates:
 
+- a local `vibeCodingSecretManager` CLI install
+- KeePassXC on macOS when `keepassxc-cli` is missing and Homebrew is available
 - `./scripts/secret-dev`
 - `.env.example`
 - `.gitignore` secret ignores
 - `CLAUDE.md` if missing
 - `~/.config/vibeCodingSecretManager/config.yaml` if missing
+
+On Linux and other platforms, the installer does not guess privileged package-manager behavior. If KeePassXC is missing, it prints manual install instructions and stops.
 
 ## Master Password Policy
 

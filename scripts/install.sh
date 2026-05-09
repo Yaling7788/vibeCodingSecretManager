@@ -17,6 +17,7 @@ set -eu
 #   VCSM_DATABASE=~/KeePass/example-dev.kdbx
 #   VCSM_KEY_FILE=~/KeePass/example-dev.key
 #   VCSM_CLI_PATH=/Applications/KeePassXC.app/Contents/MacOS/keepassxc-cli
+#   VCSM_INSTALL_KEEPASSXC=1
 
 say() {
   printf '%s\n' "$*"
@@ -51,6 +52,47 @@ detect_keepassxc_cli() {
   printf '%s' "auto"
 }
 
+install_keepassxc_if_needed() {
+  if [ "${VCSM_INSTALL_KEEPASSXC:-1}" = "0" ]; then
+    return
+  fi
+
+  detected="$(detect_keepassxc_cli)"
+  if [ "$detected" != "auto" ]; then
+    return
+  fi
+
+  os_name="$(uname -s 2>/dev/null || printf unknown)"
+  case "$os_name" in
+    Darwin)
+      if command -v brew >/dev/null 2>&1; then
+        say "KeePassXC CLI was not found. Installing KeePassXC with Homebrew..."
+        brew install --cask keepassxc
+        if [ "$(detect_keepassxc_cli)" = "auto" ]; then
+          say "KeePassXC was installed, but keepassxc-cli still was not found." >&2
+          say "Rerun with VCSM_CLI_PATH=/path/to/keepassxc-cli." >&2
+          exit 1
+        fi
+        return
+      fi
+      say "KeePassXC CLI was not found, and Homebrew is not installed." >&2
+      say "Install KeePassXC manually from https://keepassxc.org/download/ or install Homebrew, then rerun this script." >&2
+      exit 1
+      ;;
+    Linux)
+      say "KeePassXC CLI was not found." >&2
+      say "Install KeePassXC with your distro package manager, then rerun this script." >&2
+      say "Examples: sudo apt install keepassxc | sudo dnf install keepassxc | sudo pacman -S keepassxc" >&2
+      exit 1
+      ;;
+    *)
+      say "KeePassXC CLI was not found." >&2
+      say "Install KeePassXC manually, or rerun with VCSM_CLI_PATH=/path/to/keepassxc-cli." >&2
+      exit 1
+      ;;
+  esac
+}
+
 repo_root="$(CDPATH= cd -- "$(dirname -- "$0")/.." 2>/dev/null && pwd || true)"
 if [ -n "$repo_root" ] && [ -f "$repo_root/go.mod" ] && [ -d "$repo_root/cmd/vibeCodingSecretManager" ]; then
   source_dir="$repo_root"
@@ -65,6 +107,8 @@ else
 fi
 
 need go
+
+install_keepassxc_if_needed
 
 (cd "$source_dir" && go install ./cmd/vibeCodingSecretManager)
 

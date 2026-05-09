@@ -60,7 +60,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/Yaling7788/vibeCodingSecre
 The bootstrap creates:
 
 - a local `vibeCodingSecretManager` CLI install
-- KeePassXC on macOS when `keepassxc-cli` is missing and Homebrew is available
+- KeePassXC when `keepassxc-cli` is missing and a supported package manager is available
 - `./scripts/secret-dev`
 - `.env.example`
 - `.gitignore` secret ignores
@@ -79,7 +79,20 @@ VCSM_CLI_PATH=/Applications/KeePassXC.app/Contents/MacOS/keepassxc-cli
 VCSM_INSTALL_KEEPASSXC=0
 ```
 
-`VCSM_INSTALL_KEEPASSXC=0` skips KeePassXC installation. On macOS, the installer uses Homebrew when KeePassXC is missing. On Linux and other platforms it prints the package-manager command to run manually instead of guessing.
+`VCSM_INSTALL_KEEPASSXC=0` skips KeePassXC installation.
+
+KeePassXC auto-install support:
+
+- macOS: Homebrew cask
+- Debian/Ubuntu: `apt-get`
+- Fedora/RHEL-style systems: `dnf` or `yum`
+- Arch: `pacman`
+- openSUSE: `zypper`
+- Alpine: `apk`
+- Nix: `nix profile`
+- Windows shell environments: `winget`, `choco`, or `scoop`
+
+If no supported package manager is found, the installer stops and tells the user how to install KeePassXC manually. Use `VCSM_CLI_PATH=/path/to/keepassxc-cli` when KeePassXC is installed in a custom location.
 
 ## Paste Into An AI Coding Tool
 

@@ -39,6 +39,13 @@ expand_tilde() {
 }
 
 detect_keepassxc_cli() {
+  if [ -n "${VCSM_CLI_PATH:-}" ]; then
+    if [ -x "$VCSM_CLI_PATH" ] || command -v "$VCSM_CLI_PATH" >/dev/null 2>&1; then
+      printf '%s' "$VCSM_CLI_PATH"
+      return
+    fi
+  fi
+
   if command -v keepassxc-cli >/dev/null 2>&1; then
     command -v keepassxc-cli
     return
@@ -50,6 +57,122 @@ detect_keepassxc_cli() {
   fi
 
   printf '%s' "auto"
+}
+
+as_root() {
+  if [ "$(id -u 2>/dev/null || printf 1)" = "0" ]; then
+    "$@"
+    return
+  fi
+
+  if command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+    return
+  fi
+
+  say "error: '$*' requires root privileges, but sudo was not found." >&2
+  exit 1
+}
+
+verify_keepassxc_install() {
+  if [ "$(detect_keepassxc_cli)" != "auto" ]; then
+    return
+  fi
+
+  say "KeePassXC installation command completed, but keepassxc-cli still was not found in this shell." >&2
+  say "Open a new terminal, or rerun with VCSM_CLI_PATH=/path/to/keepassxc-cli." >&2
+  exit 1
+}
+
+install_keepassxc_macos() {
+  if command -v brew >/dev/null 2>&1; then
+    say "KeePassXC CLI was not found. Installing KeePassXC with Homebrew..."
+    brew install --cask keepassxc
+    verify_keepassxc_install
+    return
+  fi
+
+  say "KeePassXC CLI was not found, and Homebrew is not installed." >&2
+  say "Install KeePassXC manually from https://keepassxc.org/download/ or install Homebrew, then rerun this script." >&2
+  exit 1
+}
+
+install_keepassxc_linux() {
+  say "KeePassXC CLI was not found. Detecting Linux package manager..."
+
+  if command -v apt-get >/dev/null 2>&1; then
+    as_root apt-get update
+    as_root apt-get install -y keepassxc
+    verify_keepassxc_install
+    return
+  fi
+
+  if command -v dnf >/dev/null 2>&1; then
+    as_root dnf install -y keepassxc
+    verify_keepassxc_install
+    return
+  fi
+
+  if command -v yum >/dev/null 2>&1; then
+    as_root yum install -y keepassxc
+    verify_keepassxc_install
+    return
+  fi
+
+  if command -v pacman >/dev/null 2>&1; then
+    as_root pacman -S --noconfirm keepassxc
+    verify_keepassxc_install
+    return
+  fi
+
+  if command -v zypper >/dev/null 2>&1; then
+    as_root zypper --non-interactive install keepassxc
+    verify_keepassxc_install
+    return
+  fi
+
+  if command -v apk >/dev/null 2>&1; then
+    as_root apk add keepassxc
+    verify_keepassxc_install
+    return
+  fi
+
+  if command -v nix >/dev/null 2>&1; then
+    nix profile install nixpkgs#keepassxc
+    verify_keepassxc_install
+    return
+  fi
+
+  say "KeePassXC CLI was not found, and no supported Linux package manager was detected." >&2
+  say "Install KeePassXC manually, then rerun this script." >&2
+  say "Examples: sudo apt-get install keepassxc | sudo dnf install keepassxc | sudo pacman -S keepassxc" >&2
+  exit 1
+}
+
+install_keepassxc_windows() {
+  say "KeePassXC CLI was not found. Detecting Windows package manager..."
+
+  if command -v winget >/dev/null 2>&1; then
+    winget install --id KeePassXCTeam.KeePassXC --exact --accept-package-agreements --accept-source-agreements
+    verify_keepassxc_install
+    return
+  fi
+
+  if command -v choco >/dev/null 2>&1; then
+    choco install keepassxc -y
+    verify_keepassxc_install
+    return
+  fi
+
+  if command -v scoop >/dev/null 2>&1; then
+    scoop install keepassxc
+    verify_keepassxc_install
+    return
+  fi
+
+  say "KeePassXC CLI was not found, and winget/choco/scoop were not detected." >&2
+  say "Install KeePassXC manually from https://keepassxc.org/download/, then rerun this script." >&2
+  exit 1
 }
 
 install_keepassxc_if_needed() {
@@ -65,30 +188,22 @@ install_keepassxc_if_needed() {
   os_name="$(uname -s 2>/dev/null || printf unknown)"
   case "$os_name" in
     Darwin)
-      if command -v brew >/dev/null 2>&1; then
-        say "KeePassXC CLI was not found. Installing KeePassXC with Homebrew..."
-        brew install --cask keepassxc
-        if [ "$(detect_keepassxc_cli)" = "auto" ]; then
-          say "KeePassXC was installed, but keepassxc-cli still was not found." >&2
-          say "Rerun with VCSM_CLI_PATH=/path/to/keepassxc-cli." >&2
-          exit 1
-        fi
-        return
-      fi
-      say "KeePassXC CLI was not found, and Homebrew is not installed." >&2
-      say "Install KeePassXC manually from https://keepassxc.org/download/ or install Homebrew, then rerun this script." >&2
-      exit 1
+      install_keepassxc_macos
       ;;
     Linux)
-      say "KeePassXC CLI was not found." >&2
-      say "Install KeePassXC with your distro package manager, then rerun this script." >&2
-      say "Examples: sudo apt install keepassxc | sudo dnf install keepassxc | sudo pacman -S keepassxc" >&2
-      exit 1
+      install_keepassxc_linux
+      ;;
+    MINGW*|MSYS*|CYGWIN*)
+      install_keepassxc_windows
       ;;
     *)
-      say "KeePassXC CLI was not found." >&2
-      say "Install KeePassXC manually, or rerun with VCSM_CLI_PATH=/path/to/keepassxc-cli." >&2
-      exit 1
+      if [ "${OS:-}" = "Windows_NT" ]; then
+        install_keepassxc_windows
+      else
+        say "KeePassXC CLI was not found on unsupported OS '$os_name'." >&2
+        say "Install KeePassXC manually, or rerun with VCSM_CLI_PATH=/path/to/keepassxc-cli." >&2
+        exit 1
+      fi
       ;;
   esac
 }

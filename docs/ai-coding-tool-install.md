@@ -59,14 +59,25 @@ Customize:
 The installer creates:
 
 - a local `vibeCodingSecretManager` CLI install
-- KeePassXC on macOS when `keepassxc-cli` is missing and Homebrew is available
+- KeePassXC when `keepassxc-cli` is missing and a supported package manager is available
 - `./scripts/secret-dev`
 - `.env.example`
 - `.gitignore` secret ignores
 - `CLAUDE.md` if missing
 - `~/.config/vibeCodingSecretManager/config.yaml` if missing
 
-On Linux and other platforms, the installer does not guess privileged package-manager behavior. If KeePassXC is missing, it prints manual install instructions and stops.
+KeePassXC auto-install support:
+
+- macOS: Homebrew cask
+- Debian/Ubuntu: `apt-get`
+- Fedora/RHEL-style systems: `dnf` or `yum`
+- Arch: `pacman`
+- openSUSE: `zypper`
+- Alpine: `apk`
+- Nix: `nix profile`
+- Windows shell environments: `winget`, `choco`, or `scoop`
+
+If no supported package manager is found, the installer stops and tells the user how to install KeePassXC manually. Use `VCSM_CLI_PATH=/path/to/keepassxc-cli` when KeePassXC is installed in a custom location.
 
 ## Master Password Policy
 

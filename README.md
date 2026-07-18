@@ -1,300 +1,101 @@
-# vibeCodingSecretManager
+# VCSM
 
-Run local development commands with real secrets without putting `.env` files in your repository.
+VCSM is a local, protected secret broker for AI-assisted development. The AI can create, rotate, check, and use named secrets through approved actions, but the API never provides a `get secret value` operation.
 
-`vibeCodingSecretManager` is a small KeePassXC-backed CLI for developers who work with AI coding tools such as Claude Code, Codex, Cursor, and similar local agents. The agent can run approved project commands, but it does not get to read, print, copy, or manage secret values.
+The broker is a native per-user process. It is not a Docker container. Docker can be an approved execution target, just like `npm`, `go`, or `python`.
 
-Secrets stay in KeePassXC. The human unlocks KeePassXC through a hidden terminal prompt. The runner injects only configured secrets into the child process environment.
-
-## Why
-
-AI coding tools are useful precisely because they can inspect and edit your project. That also makes repo-local secret files risky.
-
-Avoid this:
-
-```text
-repo/.env
-repo/.env.local
-repo/docker/.env
-```
-
-Prefer this:
-
-```text
-~/.config/vibeCodingSecretManager/config.yaml
-~/KeePass/example-dev.kdbx
-~/KeePass/example-dev.key
-repo/.env.example
-repo/scripts/secret-dev
-```
-
-The repository contains placeholders and wrappers. KeePassXC contains the real values.
-
-## How It Works
+## Implemented protected-mode boundary
 
 ```mermaid
 flowchart LR
-    A["AI coding tool"] --> B["./scripts/secret-dev up"]
-    B --> C["vibeCodingSecretManager run"]
-    H["Human"] --> P["Hidden master password prompt"]
-    P --> C
-    C --> K["KeePassXC database"]
-    C --> D["npm / docker / python / go"]
-    K -. "configured secrets only" .-> C
+    AI["AI or script"] -->|"names and action IDs"| CLI["vcsm CLI"]
+    UI["Trusted hidden prompt"] -->|"master password"| CLI
+    CLI -->|"local socket / named pipe"| B["vcsm-broker"]
+    B --> V["Encrypted SQLite vault"]
+    B -->|"secret environment only"| P["Approved child process"]
+    P -->|"discarded by default"| B
 ```
 
-The important boundary is simple: the AI can trigger the wrapper, but the human unlocks KeePassXC.
+- A user-selected master password is processed with Argon2id and a random salt. It wraps a random 256-bit data-encryption key; the password is not stored.
+- Secret values and encrypted metadata use XChaCha20-Poly1305 with separate derived keys and authenticated context.
+- Names are looked up through keyed HMAC tokens, so plaintext names are not database indexes.
+- The local IPC endpoint is a mode-`0600` Unix socket on macOS/Linux and a per-user named pipe on Windows.
+- Unlock lasts until manual lock or broker/process restart. Screen lock and display sleep do not lock the vault.
+- While unlocked, VCSM prevents idle system sleep but allows display sleep, so long-running AI jobs continue.
+- New secrets are generated inside the broker and encrypted immediately. Generation profiles avoid shell-hostile characters and provide more than 200 bits of entropy.
+- Actions are configured by the user and re-approved with the master password. AI callers can run an action by name but cannot submit an arbitrary executable.
+- Child output is discarded by default. A user may approve `redacted` output; exact secret values are then removed across write boundaries. This is convenience, not protection against malicious encoding or exfiltration.
+- Audit events contain operation, object ID, result, time, and exit code only, and are HMAC chained.
 
-## Install In An App Repo
+There is intentionally no secret-value read, export, clipboard, or response operation.
 
-From the application repository you want to protect:
+## Build and install
 
-```bash
-VCSM_REPO_URL=https://github.com/Yaling7788/vibeCodingSecretManager.git \
-VCSM_PROJECT=sample-webapp \
-VCSM_ENV=dev \
-VCSM_SECRETS=DATABASE_URL,OPENAI_API_KEY \
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/Yaling7788/vibeCodingSecretManager/main/scripts/install.sh)"
+Go 1.24 or newer is required.
+
+macOS or Linux:
+
+```sh
+./scripts/install.sh
+vcsm init
+vcsm unlock
 ```
 
-The bootstrap creates:
+Windows PowerShell:
 
-- a local `vibeCodingSecretManager` CLI install
-- KeePassXC when `keepassxc-cli` is missing and a supported package manager is available
-- `./scripts/secret-dev`
-- `.env.example`
-- `.gitignore` secret ignores
-- `CLAUDE.md` if missing
-- `~/.config/vibeCodingSecretManager/config.yaml` if missing
-
-Customize the command with:
-
-```bash
-VCSM_PROJECT=my-app
-VCSM_ENV=dev
-VCSM_SECRETS=DATABASE_URL,OPENAI_API_KEY,RESEND_API_KEY
-VCSM_DATABASE=~/KeePass/my-dev.kdbx
-VCSM_KEY_FILE=~/KeePass/my-dev.key
-VCSM_CLI_PATH=/Applications/KeePassXC.app/Contents/MacOS/keepassxc-cli
-VCSM_INSTALL_KEEPASSXC=0
+```powershell
+./scripts/install.ps1
+vcsm init
+vcsm unlock
 ```
 
-`VCSM_INSTALL_KEEPASSXC=0` skips KeePassXC installation.
+The installer builds `vcsm` and `vcsm-broker`, then registers the broker as a per-user login service. It does not install Docker or a database server.
 
-KeePassXC auto-install support:
+For local development:
 
-- macOS: Homebrew cask
-- Debian/Ubuntu: `apt-get`
-- Fedora/RHEL-style systems: `dnf` or `yum`
-- Arch: `pacman`
-- openSUSE: `zypper`
-- Alpine: `apk`
-- Nix: `nix profile`
-- Windows shell environments: `winget`, `choco`, or `scoop`
-
-If no supported package manager is found, the installer stops and tells the user how to install KeePassXC manually. Use `VCSM_CLI_PATH=/path/to/keepassxc-cli` when KeePassXC is installed in a custom location.
-
-## Paste Into An AI Coding Tool
-
-Give your coding agent this repository URL:
-
-```text
-https://github.com/Yaling7788/vibeCodingSecretManager
-```
-
-Then paste:
-
-```text
-Install vibeCodingSecretManager in this app repo using KeePassXC.
-
-Use the repository's AI install guide:
-docs/ai-coding-tool-install.md
-
-Set up the wrapper, placeholder .env.example, .gitignore entries, and AI safety rules. Do not ask me for real secret values. Do not read, print, inspect, infer, retrieve, summarize, copy, or manage real secret values. If a value is needed, tell me to enter it into KeePassXC or into a local hidden prompt.
-```
-
-More detailed agent instructions live in [docs/ai-coding-tool-install.md](docs/ai-coding-tool-install.md).
-
-## CLI Install Only
-
-If you only want the CLI:
-
-```bash
-go install github.com/Yaling7788/vibeCodingSecretManager/cmd/vibeCodingSecretManager@latest
-```
-
-For local development inside this repo:
-
-```bash
-go build ./cmd/vibeCodingSecretManager
+```sh
+go build ./cmd/vcsm ./cmd/vcsm-broker
 go test ./...
 ```
 
-## Configuration
+## Minimal workflow
 
-Default config path:
+Create a generated secret; its value is never printed:
 
-```text
-~/.config/vibeCodingSecretManager/config.yaml
+```sh
+vcsm secret create sample-web dev database-password --profile database
 ```
 
-Example:
+Approve a named action. The prompt is interactive and refuses passwords from pipes, arguments, or environment variables. Password-manager auto-type can fill the hidden field.
 
-```yaml
-vault:
-  type: keepassxc
-  database: ~/KeePass/example-dev.kdbx
-  key_file: ~/KeePass/example-dev.key
-  cli_path: auto
-
-projects:
-  sample-webapp:
-    root: ~/Projects/sample-webapp
-    environments:
-      dev:
-        secrets:
-          DATABASE_URL: SampleWebApp/Dev/DATABASE_URL
-          OPENAI_API_KEY: SampleWebApp/Dev/OPENAI_API_KEY
-          RESEND_API_KEY: SampleWebApp/Dev/RESEND_API_KEY
+```sh
+vcsm action configure sample-web dev migrate \
+  --cwd "$HOME/Projects/sample-web" \
+  --secret DATABASE_PASSWORD=database-password \
+  --output metadata \
+  -- npm run migrate
 ```
 
-Create matching KeePassXC entries and store each real value in the entry Password field.
+AI tools may then run only the approved name:
 
-Recommended naming:
-
-```text
-<Project>/<Environment>/<VARIABLE_NAME>
+```sh
+vcsm run sample-web dev migrate
 ```
 
-Example:
+Other operations:
 
-```text
-SampleWebApp/Dev/DATABASE_URL
-SampleWebApp/Dev/OPENAI_API_KEY
-SampleWebApp/Dev/RESEND_API_KEY
+```sh
+vcsm status
+vcsm secret list sample-web dev
+vcsm secret rotate sample-web dev database-password --profile database
+vcsm secret revoke sample-web dev database-password
+vcsm action list sample-web dev
+vcsm audit 50
+vcsm lock
 ```
 
-## Usage
+## Current scope
 
-List configured variable names and KeePassXC entry paths:
+Biometric/keychain unlock and a graphical trusted UI are extension points, not part of this first vertical slice. The master-password prompt already supports password-manager auto-type without putting the password in AI-visible arguments, files, or environment variables.
 
-```bash
-vibeCodingSecretManager list sample-webapp dev
-```
-
-Check that configured entries exist:
-
-```bash
-vibeCodingSecretManager check sample-webapp dev
-```
-
-Run a command with secrets injected into the child process:
-
-```bash
-vibeCodingSecretManager run sample-webapp dev -- npm run dev
-```
-
-Run Docker Compose:
-
-```bash
-vibeCodingSecretManager run sample-webapp dev -- docker compose up
-```
-
-Use `--config path` before the command to load a non-default config file.
-
-## App Wrapper
-
-The bootstrap creates `./scripts/secret-dev`. A typical wrapper looks like this:
-
-```bash
-#!/bin/sh
-set -eu
-
-COMMAND="${1:-}"
-
-case "$COMMAND" in
-  up)
-    exec vibeCodingSecretManager run sample-webapp dev -- npm run dev
-    ;;
-  docker)
-    exec vibeCodingSecretManager run sample-webapp dev -- docker compose up
-    ;;
-  build)
-    exec vibeCodingSecretManager run sample-webapp dev -- npm run build
-    ;;
-  test)
-    exec npm test
-    ;;
-  lint)
-    exec npm run lint
-    ;;
-  check-secrets)
-    exec vibeCodingSecretManager check sample-webapp dev
-    ;;
-  list-secrets)
-    exec vibeCodingSecretManager list sample-webapp dev
-    ;;
-  *)
-    echo "Usage: ./scripts/secret-dev {up|docker|build|test|lint|check-secrets|list-secrets}"
-    exit 1
-    ;;
-esac
-```
-
-Allow the agent to run wrapper commands such as:
-
-```bash
-./scripts/secret-dev up
-./scripts/secret-dev check-secrets
-./scripts/secret-dev list-secrets
-```
-
-Do not allow the agent to run `keepassxc-cli`, `printenv`, `env`, `set`, `export`, or commands that read `.env` files.
-
-## Security Model
-
-Protects against:
-
-- Accidental `.env` reads by AI coding tools.
-- Accidental commits of local secret files.
-- Secret values being stored in repo files.
-- Casual terminal output leaks from secret retrieval.
-
-Does not protect against:
-
-- Malicious code intentionally printing environment variables.
-- An AI tool with unrestricted shell access.
-- A compromised local machine.
-- Production secrets used in local dev.
-- Secrets leaked by the application itself.
-
-Use development and test credentials. Rotate anything exposed.
-
-## Master Password Policy
-
-The KeePassXC master password is a human presence check.
-
-Do:
-
-- Type the master password into the local hidden prompt.
-- Use an optional KeePassXC key file as an extra factor.
-- Keep the database and key file outside the repo.
-
-Do not:
-
-- Store the master password in a file.
-- Put it in environment variables.
-- Put it in shell history or command arguments.
-- Let an AI coding tool manage it.
-- Run a headless unlock flow controlled by the AI.
-
-If the AI can unlock KeePassXC without you, it can retrieve the vault contents. That breaks this tool's security model.
-
-## Documentation
-
-- [AI coding tool install](docs/ai-coding-tool-install.md)
-- [KeePassXC setup](docs/keepassxc-setup.md)
-- [Claude Code setup](docs/claude-code-setup.md)
-- [Threat model](docs/threat-model.md)
-- [Examples](docs/examples.md)
-- [Agent skill](skills/manage-local-secrets/SKILL.md)
+See [docs/protected-architecture.md](docs/protected-architecture.md) for component boundaries and the remaining gaps.

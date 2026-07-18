@@ -1,3 +1,4 @@
-display_name: Manage Local Secrets
-short_description: Safe local secret operations
-default_prompt: Use this skill to create, rotate, delete, check, and inject local development secrets through approved secret-manager scripts while avoiding direct secret exposure.
+interface:
+  display_name: "Manage Local Secrets"
+  short_description: "Protected local secret operations"
+  default_prompt: "Use $manage-local-secrets to manage named development secrets through approved VCSM operations without exposing values."

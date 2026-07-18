@@ -17,6 +17,6 @@ Email the maintainer or use GitHub private vulnerability reporting when enabled.
 
 ## Security Boundaries
 
-`vibeCodingSecretManager` is a local workflow guardrail. It does not sandbox arbitrary commands, prevent malicious application code from reading its own environment, or protect a compromised machine.
+VCSM is a local workflow guardrail. It does not sandbox arbitrary commands, prevent malicious application code from reading its own environment, or protect a compromised machine.
 
 Use development credentials and rotate any secret that may have been exposed.

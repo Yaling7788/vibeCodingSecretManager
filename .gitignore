@@ -1,5 +1,6 @@
 # Build outputs
-/vibeCodingSecretManager
+/vcsm
+/vcsm-broker
 bin/
 dist/
 
@@ -16,7 +17,7 @@ dist/
 secrets/
 Secrets/
 
-# KeePassXC
+# Encrypted vault exports and legacy imports
 *.kdbx
 *.kdbx.lock
 

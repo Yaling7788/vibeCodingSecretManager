@@ -1,35 +1,30 @@
-# Threat Model
+# Threat model
 
-## Protects Against
+Protected mode is designed to keep secret values out of source trees, AI conversations, command arguments, configuration files, normal IPC responses, and audit records.
 
-1. Accidental `.env` reads by AI coding agents.
-2. Accidental commits of repo-local `.env` files.
-3. AI agents inspecting project-local secret files while debugging.
-4. Secrets being stored in source-controlled files.
-5. Casual terminal output leaks from the secret retrieval step.
+## Protected cases
 
-## Does Not Fully Protect Against
+- Accidental AI reads of `.env` or password-manager databases.
+- Accidental source-control commits of development secrets.
+- AI requests to retrieve or export a value: no such broker operation exists.
+- AI selection of arbitrary commands: execution requires a previously user-approved action name.
+- Offline theft of the vault database without the master password.
+- Simple output of an exact secret when the user explicitly enables redacted output.
 
-1. Malicious code intentionally printing environment variables.
-2. AI agents running unapproved commands with full shell access.
-3. A compromised local machine.
-4. A compromised KeePassXC database, key file, or master password.
-5. Secrets leaked by application logs.
-6. Secrets visible to process inspection tools available to the same user account.
+## Out of scope
 
-## Required User Discipline
+- Malware, administrator/root access, process debugging, or a compromised user session.
+- Malicious code that receives a secret and encodes, writes, or transmits it.
+- A dependency or approved executable that exfiltrates its environment.
+- A weak or captured master password.
+- Production-secret governance, remote authorization, multi-user sharing, or host attestation.
 
-1. Keep KeePassXC databases outside the repo.
-2. Keep KeePassXC key files outside the repo.
-3. Do not approve forbidden shell commands.
-4. Use dev and test credentials, not production credentials.
-5. Rotate secrets if exposed.
-6. Run a secret scanner such as gitleaks before committing.
+An AI agent with unrestricted execution as the same OS user can modify code run by an approved action and can often inspect peer processes. VCSM reduces accidental disclosure and constrains normal operations; it is not a sandbox. Use scoped development credentials and rotate exposed values.
 
-## Design Choices
+## Defaults
 
-`vibeCodingSecretManager` does not start a local HTTP API. There is no localhost endpoint for secrets.
-
-The config maps specific environment variable names to specific KeePassXC entries. Agents cannot ask the runner for arbitrary entries unless the user explicitly adds those entries to the config.
-
-Secrets are passed only through the child process environment. The runner does not write `.env` files by default.
+- Child stdout/stderr is discarded and only exit metadata returns.
+- Unlock persists until manual lock or broker restart; screen lock does not pause jobs.
+- The display may sleep, but idle system sleep is inhibited while unlocked.
+- The master password is entered through a local interactive hidden prompt, never an argument, environment variable, or file.
+- Secret generation uses compatibility-safe alphabets with at least 200 bits of entropy.

@@ -1,0 +1,13 @@
+[Unit]
+Description=VCSM protected secret broker
+
+[Service]
+Type=simple
+ExecStart=__BROKER__
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target
